@@ -316,6 +316,10 @@ def complete_code(
 
             for sample, generated_tokens in zip(generated_tasks, generated_tokens):
                 gen_token_dict[sample].append(generated_tokens)
+                # gen_code = tokenizer.decode(
+                #     generated_tokens, skip_special_tokens=False, clean_up_tokenization_spaces=False
+                # )
+                # print(gen_code)
 
     code_gens = [[] for _ in range(n_tasks)]
     for sample, generated_tokens in gen_token_dict.items():
