@@ -1,6 +1,6 @@
 
 # Specify the number of GPU cards per node. Please set according to your specific situation!
-N_GPU_PER_NODE=1
+N_GPU_PER_NODE=4
 # Specify the number of nodes (machines) can be used. Please set according to your specific situation!
 N_NODE=1
 
@@ -28,4 +28,4 @@ accelerate launch \
   --main_process_ip $MASTER_ADDR \
   --main_process_port $MASTER_PORT \
   --rdzv_backend 'static' \
-  mft_accelerate.py --train_config configs/qwen_train_config_1_8B.json
+  mft_accelerate.py --train_config configs/qwen_train_config_1_8B_20231213.json
