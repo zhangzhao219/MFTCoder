@@ -8,9 +8,9 @@ N_GPU_PER_NODE=1
 tasks=(humanevalsynthesize-python humanevalsynthesize-java humanevalsynthesize-js humanevalsynthesize-cpp humanevalsynthesize-go humanevalsynthesize-rust humanevalfixtests-python humanevalfixtests-java humanevalfixtests-js humanevalfixtests-cpp humanevalfixtests-go humanevalfixtests-rust mbpp)
 
 
-model=/home/aiscuser/Code-Qwen/output/20231209/merge/step_38000
-model_name=20231209-step_38000
-generation_base_dir=/home/aiscuser/Code-Qwen/output/20231209/generate/step_38000
+model=/home/aiscuser/Code-Qwen/output/20231216/merge/step_5000
+model_name=20231216-step_5000
+generation_base_dir=/home/aiscuser/Code-Qwen/output/20231216/generate/step_5000
 
 
 if [ ! -d $generation_base_dir ]; then
@@ -32,38 +32,17 @@ end_tag="<|im_end|>"
 start_tag="<|im_start|>"
 
 # If you need to set system prompt, set it here, otherwise you can set it as empty string. Decide whether to add system prompt by yourself.
-if [ "$task" == "mbpp" ]; then
-    system="$start_tag"$system$'\n'"You are an expert code programmer, now you should answer code question below, please give your code directly"$'\n'"$end_tag"$'\n'
-elif [ "$task" == "humanevalsynthesize-python" ]; then
-    system="$start_tag"$system$'\n'"You are an expert Python programmer, Now I will give you a code question and part of the function in Python, you should provide me with the complete function that work normally."$'\n'"$end_tag"$'\n'
-elif [ "$task" == "humanevalsynthesize-java" ]; then
-    system="$start_tag"$system$'\n'"You are an expert Java programmer, Now I will give you a code question and part of the function in Java, you should provide me with the complete function that work normally."$'\n'"$end_tag"$'\n'
-elif [ "$task" == "humanevalsynthesize-js" ]; then
-    system="$start_tag"$system$'\n'"You are an expert JavaScript programmer, Now I will give you a code question and part of the function in JavaScript, you should provide me with the complete function that work normally."$'\n'"$end_tag"$'\n'
-elif [ "$task" == "humanevalsynthesize-cpp" ]; then
-    system="$start_tag"$system$'\n'"You are an expert C++ programmer, Now I will give you a code question and part of the function in C++, you should provide me with the complete function that work normally."$'\n'"$end_tag"$'\n'
-elif [ "$task" == "humanevalsynthesize-go" ]; then
-    system="$start_tag"$system$'\n'"You are an expert Go programmer, Now I will give you a code question and part of the function in Go, you should provide me with the complete function that work normally."$'\n'"$end_tag"$'\n'
-elif [ "$task" == "humanevalsynthesize-rust" ]; then
-    system="$start_tag"$system$'\n'"You are an expert Rust programmer, Now I will give you a code question and part of the function in Rust, you should provide me with the complete function that work normally."$'\n'"$end_tag"$'\n'
-elif [ "$task" == "humanevalfixtests-python" ]; then
-    system="$start_tag"$system$'\n'"You are an expert Python programmer, Now I will give you a piece of a code in Python, but there is a bug in it, you should fix the bug with test cases provided by me."$'\n'"$end_tag"$'\n'
-elif [ "$task" == "humanevalfixtests-java" ]; then
-    system="$start_tag"$system$'\n'"You are an expert Java programmer, Now I will give you a piece of a code in Java, but there is a bug in it, you should fix the bug with test cases provided by me."$'\n'"$end_tag"$'\n'
-elif [ "$task" == "humanevalfixtests-js" ]; then
-    system="$start_tag"$system$'\n'"You are an expert JavaScript programmer, Now I will give you a piece of a code in JavaScript, but there is a bug in it, you should fix the bug with test cases provided by me."$'\n'"$end_tag"$'\n'
-elif [ "$task" == "humanevalfixtests-cpp" ]; then
-    system="$start_tag"$system$'\n'"You are an expert C++ programmer, Now I will give you a piece of a code in C++, but there is a bug in it, you should fix the bug with test cases provided by me."$'\n'"$end_tag"$'\n'
-elif [ "$task" == "humanevalfixtests-go" ]; then
-    system="$start_tag"$system$'\n'"You are an expert Go programmer, Now I will give you a piece of a code in Go, but there is a bug in it, you should fix the bug with test cases provided by me."$'\n'"$end_tag"$'\n'
-elif [ "$task" == "humanevalfixtests-rust" ]; then
-    system="$start_tag"$system$'\n'"You are an expert Rust programmer, Now I will give you a piece of a code in Rust, but there is a bug in it, you should fix the bug with test cases provided by me."$'\n'"$end_tag"$'\n'
-fi
+system="$start_tag"$system$'\n'"$end_tag"$'\n'
 
 for task in "${tasks[@]}"; do
 
-    prefix="$system""$start_tag"${user}$'\n'
-    suffix="$end_tag"$'\n'"$start_tag"${assistant}'\n'
+    if [ "$task" == "mbpp" ]; then
+        prefix="$system""$start_tag"${user}$'\n'
+        suffix="$end_tag"$'\n'"$start_tag"${assistant}
+    else
+        prefix=""
+        suffix=""
+    fi
 
     generations_path=$generation_base_dir/generations_$model_name/generations_$task\_$model_name.json
     if [ ! -d $generation_base_dir/generations_$model_name ]; then
@@ -81,6 +60,7 @@ for task in "${tasks[@]}"; do
                 --n_samples $n_samples \
                 --batch_size $batch_size \
                 --max_length_generation 2000 \
+                --max_new_tokens 1024 \
                 --do_sample False \
                 --temperature 0.2 \
                 --precision bf16 \

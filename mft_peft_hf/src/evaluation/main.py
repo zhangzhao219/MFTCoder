@@ -93,6 +93,12 @@ def parse_args():
         help="Maximum length of generated sequence (prompt+generation)",
     )
     parser.add_argument(
+        "--max_new_tokens",
+        type=int,
+        default=1024,
+        help="Add config",
+    )
+    parser.add_argument(
         "--precision",
         type=str,
         default="fp32",
