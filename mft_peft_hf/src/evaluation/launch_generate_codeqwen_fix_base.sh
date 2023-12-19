@@ -1,0 +1,79 @@
+#pip install transformers==4.32.0
+
+N_NODE=1
+
+N_GPU_PER_NODE=1
+
+
+tasks=(humanevalfixtests-python humanevalfixtests-java humanevalfixtests-js humanevalfixtests-cpp humanevalfixtests-go humanevalfixtests-rust)
+
+
+model=/home/aiscuser/Code-Qwen/output/20231217/merge/epoch_5
+model_name=20231217-epoch_5
+generation_base_dir=/home/aiscuser/Code-Qwen/output/20231217/generate/epoch_5
+
+
+if [ ! -d $generation_base_dir ]; then
+    mkdir $generation_base_dir
+fi
+
+
+batch_size=1
+n_samples=1
+# For qwen base model, eos is '<|endoftext|>'; for fine-tuned qwen model, eos is '<|im_end|>'
+eos_token="<|im_end|>"
+
+
+# SFT Format
+user=user
+assistant=assistant
+system=system
+end_tag="<|im_end|>"
+start_tag="<|im_start|>"
+
+# If you need to set system prompt, set it here, otherwise you can set it as empty string. Decide whether to add system prompt by yourself.
+system="$start_tag"$system$'\n'"$end_tag"$'\n'
+
+for task in "${tasks[@]}"; do
+
+    if [ "$task" == "mbpp" ]; then
+        prefix="$system""$start_tag"${user}$'\n'
+        suffix="$end_tag"$'\n'"$start_tag"${assistant}
+    else
+        prefix=""
+        suffix=""
+    fi
+
+    generations_path=$generation_base_dir/generations_$model_name/generations_$task\_$model_name.json
+    if [ ! -d $generation_base_dir/generations_$model_name ]; then
+        mkdir $generation_base_dir/generations_$model_name
+    fi
+
+    echo "start to launch ...."
+    accelerate launch \
+            --num_machines $N_NODE \
+            --num_processes $(($N_NODE*$N_GPU_PER_NODE)) \
+            main.py \
+                --model $model \
+                --task $task \
+                --prompt instruct \
+                --n_samples $n_samples \
+                --batch_size $batch_size \
+                --max_length_generation 2000 \
+                --max_new_tokens 1024 \
+                --do_sample False \
+                --temperature 0.2 \
+                --precision bf16 \
+                --eos "$eos_token" \
+                --seed 999999999 \
+                --add_special_tokens True \
+                --trust_remote_code \
+                --generation_only \
+                --save_generations_path $generations_path \
+                --prefix "$prefix" \
+                --suffix "$suffix"
+    
+    echo "Task $task done"
+done
+
+echo $model_name
